@@ -1,0 +1,10 @@
+{
+  "providers": {
+    "local-bench": {
+      "baseUrl": "http://127.0.0.1:LOCAL_PORT/v1",
+      "api": "openai-completions",
+      "apiKey": "placeholder-not-a-lock",
+      "models": [{ "id": "YOUR_PINNED_MODEL_TAG", "contextWindow": 16384 }]
+    }
+  }
+}
