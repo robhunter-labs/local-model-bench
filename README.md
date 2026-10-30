@@ -33,11 +33,11 @@ The original runs used a private, hand-built Ruby harness. This repo's Python su
 | [`pentest/`](pentest/) | Rules-of-engagement stub, test map, traceability (threat → control → test) |
 | [`standards/`](standards/) | Reference stubs: OWASP, NIST, MITRE ATLAS and others, with links only |
 | [`results/`](results/) | Transcribed observations and synthetic dry-run fixtures, kept apart |
-| [`figures/`](figures/) | Figure 1 (SVG + PNG) |
+| [`figures/`](figures/) | Figure 1 (SVG, plus the script that draws it) |
 
 ## Run it
 
-Python 3.10+ standard library only. No model needed for the dry run. A live run against your own host needs one more switch than the usage line shows; it's in the source, and it's there on purpose.
+Python 3.9 or newer, standard library only. No model needed for the dry run. A live run against your own host also needs `--i-own-this-host`: a deliberate acknowledgement that you own the host, or are authorized to test it. The dry run exits 0 only when every case matches [`results/dry-run/EXPECTED.json`](results/dry-run/EXPECTED.json); a live run exits 1 if any case fails or errors, so CI can gate on it.
 
 ```sh
 python3 -m unittest discover -s tests -v          # suite, guard, traceability and schema tests
@@ -48,13 +48,13 @@ python3 bench/run_bench.py --dry-run --category harness-tool-permissions
 Against a real local endpoint (an OpenAI-compatible server reached through your own tunnel):
 
 ```sh
-python3 bench/run_bench.py \
+python3 bench/run_bench.py --i-own-this-host \
   --base-url http://127.0.0.1:11434/v1 \
   --model "YOUR_PINNED_MODEL_TAG" \
   --out results/local/
 ```
 
-Host checks (`--category network-exposure`) are meant to run **on the inference host**. They only read local state and attempt connections to the host's own addresses.
+Host checks (`--category network-exposure`) are meant to run **on the inference host**. They only read local state and attempt connections to the host's own addresses. They are written for macOS; on Linux they also try systemd, and report "inconclusive" when they can't read the service's environment. Requests to `127.0.0.1`/`localhost` always bypass any HTTP proxy settings.
 
 ## Boundaries
 
