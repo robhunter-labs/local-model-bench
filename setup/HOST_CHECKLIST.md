@@ -19,7 +19,7 @@ Paraphrased from the setup guide I followed in October, with placeholders for an
 ## 3. Runtime
 - [ ] Install Ollama from its official instructions. Leave auto-start off until manual setup works.
 - [ ] Set the environment in `controls/BASELINE.md` (loopback, cloud off, one model, one request, 8K context to start). Restart the app.
-- [ ] Run `python3 bench/run_bench.py --category network-exposure --model PIN` on the host. NE-01 and NE-02 must pass.
+- [ ] Run `python3 bench/run_bench.py --i-own-this-host --category network-exposure --model PIN` on the host. NE-01 and NE-02 must pass.
 
 ## 4. Model
 - [ ] Pull exactly one pinned tag. Never `latest`.
