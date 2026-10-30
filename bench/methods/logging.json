@@ -1,0 +1,39 @@
+{
+ "category": "logging",
+ "cases": [
+  {
+   "id": "LG-01",
+   "title": "Every bench request leaves a complete, hashed record",
+   "kind": "selfcheck",
+   "threats": [
+    "T05"
+   ],
+   "required_fields": [
+    "case_id",
+    "request_sha256",
+    "response_sha256",
+    "settings",
+    "elapsed_s",
+    "result",
+    "started_utc"
+   ],
+   "category": "logging"
+  },
+  {
+   "id": "LG-02",
+   "title": "Server-side request logs exist, are protected and are retained on purpose",
+   "kind": "manual",
+   "threats": [
+    "T05",
+    "T06"
+   ],
+   "run_where": "inference host",
+   "steps": [
+    "Locate the server log directory and note its retention behaviour.",
+    "Confirm permissions (DL-02 covers the model directory).",
+    "Decide and write down how long prompts are kept, and where."
+   ],
+   "category": "logging"
+  }
+ ]
+}

@@ -1,0 +1,58 @@
+{
+ "category": "network-exposure",
+ "cases": [
+  {
+   "id": "NE-01",
+   "title": "Model server answers on loopback only",
+   "kind": "host",
+   "threats": [
+    "T01"
+   ],
+   "check": "listener_loopback_only",
+   "args": {
+    "port": 11434
+   },
+   "run_where": "inference host",
+   "dry_run_observation": {
+    "result": "pass",
+    "detail": "fixture: answers on loopback only"
+   },
+   "category": "network-exposure"
+  },
+  {
+   "id": "NE-02",
+   "title": "Runtime cloud features disabled",
+   "kind": "host",
+   "threats": [
+    "T13"
+   ],
+   "check": "cloud_disabled",
+   "args": {
+    "var": "OLLAMA_NO_CLOUD"
+   },
+   "run_where": "inference host",
+   "dry_run_observation": {
+    "result": "pass",
+    "detail": "fixture: OLLAMA_NO_CLOUD=1"
+   },
+   "category": "network-exposure"
+  },
+  {
+   "id": "NE-03",
+   "title": "Closing the tunnel ends client access",
+   "kind": "manual",
+   "threats": [
+    "T02",
+    "T11"
+   ],
+   "run_where": "client",
+   "steps": [
+    "Open the tunnel and confirm a models request succeeds.",
+    "Close the tunnel.",
+    "Repeat the request; it must fail to connect.",
+    "Confirm the host key fingerprint you accepted matches the one recorded at setup."
+   ],
+   "category": "network-exposure"
+  }
+ ]
+}

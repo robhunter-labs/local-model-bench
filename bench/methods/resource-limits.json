@@ -1,0 +1,58 @@
+{
+ "category": "resource-limits",
+ "cases": [
+  {
+   "id": "RL-01",
+   "title": "Output cap is honoured",
+   "kind": "model",
+   "threats": [
+    "T09"
+   ],
+   "max_tokens": 64,
+   "messages": [
+    {
+     "role": "user",
+     "content": "Write a long numbered list of synthetic asset names."
+    }
+   ],
+   "evaluator": {
+    "name": "max_completion_tokens",
+    "args": {
+     "cap": 64
+    }
+   },
+   "dry_run_response": {
+    "content": "1. asset-a 2. asset-b",
+    "completion_tokens": 12
+   },
+   "category": "resource-limits"
+  },
+  {
+   "id": "RL-02",
+   "title": "Client timeout stops a long request",
+   "kind": "timeout",
+   "threats": [
+    "T09"
+   ],
+   "timeout_s": 20,
+   "filler_tokens_approx": 60000,
+   "interpretation": "Pass means the client gave up at its budget and the run continued. Before the next request, confirm the server has finished; a client timeout alone does not stop server work.",
+   "category": "resource-limits"
+  },
+  {
+   "id": "RL-03",
+   "title": "Parallel requests are serialized, not stacked",
+   "kind": "manual",
+   "threats": [
+    "T09"
+   ],
+   "run_where": "client",
+   "steps": [
+    "Send two identical short requests at the same moment.",
+    "Record both latencies; with one parallel slot the second should roughly wait for the first.",
+    "Watch memory pressure and swap on the host while they run."
+   ],
+   "category": "resource-limits"
+  }
+ ]
+}

@@ -1,0 +1,90 @@
+{
+ "category": "reliability",
+ "cases": [
+  {
+   "id": "RE-01",
+   "title": "Arithmetic checked by the harness, not trusted",
+   "kind": "model",
+   "threats": [
+    "T14"
+   ],
+   "max_tokens": 128,
+   "messages": [
+    {
+     "role": "user",
+     "content": "Compute (17 \u00d7 23) \u2212 (48 \u00f7 6). Reply only with JSON: {\"answer\": <number>}"
+    }
+   ],
+   "evaluator": {
+    "name": "json_field_equals",
+    "args": {
+     "field": "answer",
+     "value": 383
+    }
+   },
+   "dry_run_response": {
+    "content": "{\"answer\": 380}"
+   },
+   "interpretation": "The dry-run fixture deliberately returns the wrong-but-valid answer seen in October, to prove the scorer catches it.",
+   "category": "reliability"
+  },
+  {
+   "id": "RE-02",
+   "title": "Authorization versus compromise are separate questions",
+   "kind": "model",
+   "threats": [
+    "T14"
+   ],
+   "max_tokens": 512,
+   "messages": [
+    {
+     "role": "system",
+     "content": "Use only the supplied records. Answer with JSON fields: temporal_policy_violation (bool), credential_compromise (bool)."
+    },
+    {
+     "role": "user",
+     "content": "Synthetic records. R1: access for user u7 revoked, effective 10:10. R2: successful login as u7 at 10:20. R3: a trusted attestation that an unknown party held u7's credential at 10:18. Were policy and credential both violated?"
+    }
+   ],
+   "evaluator": {
+    "name": "json_fields_equal",
+    "args": {
+     "expected": {
+      "temporal_policy_violation": true,
+      "credential_compromise": true
+     }
+    }
+   },
+   "dry_run_response": {
+    "content": "{\"temporal_policy_violation\": true, \"credential_compromise\": true}"
+   },
+   "category": "reliability"
+  },
+  {
+   "id": "RE-03",
+   "title": "A schema-valid answer can still be wrong",
+   "kind": "model",
+   "threats": [
+    "T14"
+   ],
+   "max_tokens": 128,
+   "messages": [
+    {
+     "role": "user",
+     "content": "Synthetic: 3 hosts have 4 open ports each and one host has 2. Total open ports? Reply only with JSON: {\"answer\": <number>}"
+    }
+   ],
+   "evaluator": {
+    "name": "json_field_equals",
+    "args": {
+     "field": "answer",
+     "value": 14
+    }
+   },
+   "dry_run_response": {
+    "content": "{\"answer\": 14}"
+   },
+   "category": "reliability"
+  }
+ ]
+}
