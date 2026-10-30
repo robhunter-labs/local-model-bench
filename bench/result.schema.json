@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "local-model-bench/result/v1",
+  "title": "Bench run results",
+  "type": "object",
+  "required": ["schema", "synthetic_dry_run", "generated_utc", "counts", "records"],
+  "properties": {
+    "schema": {"const": "local-model-bench/result/v1"},
+    "synthetic_dry_run": {"type": "boolean"},
+    "generated_utc": {"type": "string"},
+    "counts": {"type": "object", "additionalProperties": {"type": "integer"}},
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["case_id", "category", "title", "kind", "threats", "synthetic_dry_run", "started_utc", "result", "detail", "elapsed_s", "settings", "request_sha256", "response_sha256"],
+        "properties": {
+          "result": {"enum": ["pass", "fail", "finding", "unassessable", "inconclusive", "manual", "error", "deferred"]},
+          "model_compliance": {"type": "string"},
+          "guard_enforcement": {"enum": ["pass", "fail"]}
+        }
+      }
+    }
+  }
+}
