@@ -9,7 +9,13 @@ from __future__ import annotations
 import json
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
+
+LOOPBACK = {"127.0.0.1", "localhost", "::1"}
+# Loopback traffic must never go through an HTTP proxy (http_proxy/https_proxy on corporate
+# laptops would otherwise carry bench prompts and planted data off the host, untested).
+_NO_PROXY = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 
 class EndpointError(Exception):
@@ -32,7 +38,9 @@ class Client:
             req.add_header("Authorization", f"Bearer {key}")
         started = time.monotonic()
         try:
-            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+            host = urllib.parse.urlsplit(self.base_url).hostname or ""
+            opener = _NO_PROXY if host in LOOPBACK else urllib.request.build_opener()
+            with opener.open(req, timeout=self.timeout) as resp:
                 raw = resp.read()
                 status = resp.status
         except urllib.error.HTTPError as e:

@@ -1,10 +1,14 @@
 """Checks meant to run ON the inference host. Read-only: they inspect local state and
 try to connect to the host's own addresses. They never read file contents for the
 secrets inventory, only names, sizes and permissions.
+
+Written for macOS (launchd); on Linux the service-environment check also tries systemd and
+reports "inconclusive" when it can't read the service's environment.
 """
 from __future__ import annotations
 
 import os
+import shutil
 import socket
 import stat
 import subprocess
@@ -13,11 +17,12 @@ from pathlib import Path
 
 def _local_addresses() -> list[str]:
     addrs = set()
-    try:
-        for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
-            addrs.add(info[4][0])
-    except socket.gaierror:
-        pass
+    for family in (socket.AF_INET, socket.AF_INET6):
+        try:
+            for info in socket.getaddrinfo(socket.gethostname(), None, family):
+                addrs.add(info[4][0])
+        except (socket.gaierror, OSError):
+            pass
     # Best-effort discovery of the primary outbound interface without sending traffic.
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -26,7 +31,8 @@ def _local_addresses() -> list[str]:
         s.close()
     except OSError:
         pass
-    return sorted(a for a in addrs if not a.startswith("127."))
+    # Loopback and IPv6 link-local (needs a scope id to connect) are excluded.
+    return sorted(a for a in addrs if not a.startswith("127.") and a != "::1" and not a.lower().startswith("fe80"))
 
 
 def _can_connect(host: str, port: int, timeout: float = 1.5) -> bool:
@@ -56,10 +62,28 @@ def _launchctl_getenv(name: str):
         return None
 
 
+def _systemd_getenv(name: str, unit: str = "ollama"):
+    """Returns (readable, value). readable is False if systemd isn't there to ask."""
+    try:
+        out = subprocess.run(["systemctl", "show", unit, "-p", "Environment"], capture_output=True, text=True, timeout=5)
+    except (FileNotFoundError, subprocess.SubprocessError):
+        return False, None
+    for part in out.stdout.strip().removeprefix("Environment=").split():
+        if part.startswith(name + "="):
+            return True, part.split("=", 1)[1]
+    return out.returncode == 0, None
+
+
 def cloud_disabled(var: str = "OLLAMA_NO_CLOUD") -> dict:
     value = os.environ.get(var) or _launchctl_getenv(var)
+    systemd_readable = False
     if value is None:
-        return {"result": "fail", "detail": f"{var} not set in the environment or launchd", "observations": {var: None}}
+        systemd_readable, value = _systemd_getenv(var)
+    if value is None:
+        if not systemd_readable and shutil.which("launchctl") is None:
+            return {"result": "inconclusive", "detail": f"{var} not in this environment, and the service's environment can't be read here",
+                    "observations": {var: None}}
+        return {"result": "fail", "detail": f"{var} not set in the environment, launchd or systemd", "observations": {var: None}}
     return {"result": "pass" if value in ("1", "true", "TRUE") else "fail", "detail": f"{var}={value}", "observations": {var: value}}
 
 
