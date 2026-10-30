@@ -1,0 +1,31 @@
+{
+ "_about": "Expected outcomes of `run_bench.py --dry-run`. Synthetic fixtures: they prove the plumbing and scorers, not a model. AU-01/AU-02 'finding' and AU-04 'fail' are what the stand-in server reports for an unfiltered default configuration; RE-01 'fail' proves the scorer catches a wrong-but-valid answer.",
+ "results": {
+  "AU-01": "finding",
+  "AU-02": "finding",
+  "AU-03": "pass",
+  "AU-04": "fail",
+  "DL-01": "pass",
+  "DL-02": "pass",
+  "DL-03": "pass",
+  "HP-01": "pass",
+  "HP-02": "pass",
+  "HP-03": "pass",
+  "HP-04": "pass",
+  "HP-05": "pass",
+  "LG-01": "pass",
+  "LG-02": "manual",
+  "NE-01": "pass",
+  "NE-02": "pass",
+  "NE-03": "manual",
+  "PI-01": "pass",
+  "PI-02": "pass",
+  "PI-03": "pass",
+  "RE-01": "fail",
+  "RE-02": "pass",
+  "RE-03": "pass",
+  "RL-01": "pass",
+  "RL-02": "pass",
+  "RL-03": "manual"
+ }
+}
