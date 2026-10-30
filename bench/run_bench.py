@@ -21,7 +21,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 from benchlib.client import Client, EndpointError, FakeClient  # noqa: E402
-from benchlib.evaluators import EVALUATORS  # noqa: E402
+from benchlib.evaluators import EVALUATORS, _message  # noqa: E402
 from benchlib.guard import Guard, ToolSpec  # noqa: E402
 from benchlib import host_checks  # noqa: E402
 
@@ -129,8 +129,10 @@ def run_case(case, client, dry: bool, pin: str | None):
         elif kind == "model":
             ev = case["evaluator"]
             rec["result"], rec["detail"] = EVALUATORS[ev["name"]](payload, **ev.get("args", {}))
+        elif not _message(payload):
+            rec["result"], rec["detail"] = "error", f"malformed response: {str(payload)[:200]}"
         else:
-            msg = payload["choices"][0]["message"]
+            msg = _message(payload)
             n = len(msg.get("tool_calls") or [])
             decision = guard_from(case["guard_tools"]).review(msg)
             guard_ok = (n <= 1 and decision.ok) or (n > 1 and not decision.ok)
@@ -188,7 +190,8 @@ def main(argv=None):
     ap.add_argument("--model", default=None, help="the exact pinned tag you serve")
     ap.add_argument("--pin", default=None, help="tag expected in the served list (defaults to --model)")
     ap.add_argument("--dry-run", action="store_true")
-    ap.add_argument("--i-own-this-host", dest="owner_ack", action="store_true", help=argparse.SUPPRESS)
+    ap.add_argument("--i-own-this-host", dest="owner_ack", action="store_true",
+                    help="required for live runs: you own, or are authorized to test, this host")
     ap.add_argument("--category")
     ap.add_argument("--case")
     ap.add_argument("--timeout", type=float, default=120)
@@ -199,14 +202,17 @@ def main(argv=None):
     if not a.dry_run and not a.model:
         ap.error("--model is required unless --dry-run")
     if not a.dry_run and not a.owner_ack:
-        ap.error("live runs only touch hosts you own; this bench won't start until you say so (read the source)")
+        ap.error("live runs only touch hosts you own; add --i-own-this-host to confirm you own or are authorized to test it")
     client = FakeClient() if a.dry_run else Client(a.base_url, a.model, timeout=a.timeout)
     cases = load_cases(Path(a.methods), a.category, a.case)
+    if not cases:
+        ap.error("no cases matched --category/--case; nothing to run")
     out = Path(a.out) if a.out else (HERE.parent / "results" / ("dry-run" if a.dry_run else "local"))
     out.mkdir(parents=True, exist_ok=True)
-    stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    # Microseconds plus exclusive create: two runs in the same second never overwrite each other.
+    stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
     records = []
-    with open(out / f"requests-{stamp}.jsonl", "w") as raw:
+    with open(out / f"requests-{stamp}.jsonl", "x", encoding="utf-8") as raw:
         for c in cases:
             rec, req, resp = run_case(c, client, a.dry_run, a.pin)
             raw.write(json.dumps({"case_id": c["id"], "request": req, "response": resp}, default=str) + "\n")
@@ -224,11 +230,20 @@ def main(argv=None):
     summary = {"schema": "local-model-bench/result/v1", "synthetic_dry_run": a.dry_run, "generated_utc": stamp,
                "counts": {k: sum(1 for r in records if r["result"] == k) for k in sorted({r["result"] for r in records})},
                "records": records}
-    (out / f"results-{stamp}.json").write_text(json.dumps(summary, indent=1, default=str))
+    with open(out / f"results-{stamp}.json", "x", encoding="utf-8") as fh:
+        fh.write(json.dumps(summary, indent=1, default=str))
     print(f"\n{len(records)} cases -> {out}/results-{stamp}.json  {summary['counts']}")
     if a.dry_run:
         print("Dry run: synthetic fixtures only. Nothing here describes a real model or host.")
-    return 0
+    # Exit code, so CI can gate. Dry run: 0 only if every case matches results/dry-run/EXPECTED.json
+    # (some fixtures fail on purpose). Live run: 1 if any case failed or errored.
+    if a.dry_run:
+        expected = json.loads((HERE.parent / "results" / "dry-run" / "EXPECTED.json").read_text(encoding="utf-8"))["results"]
+        drift = [r["case_id"] for r in records if r["case_id"] in expected and r["result"] != expected[r["case_id"]]]
+        if drift:
+            print(f"dry run differs from EXPECTED.json for: {drift}")
+        return 1 if drift else 0
+    return 1 if any(r["result"] in ("fail", "error") for r in records) else 0
 
 
 if __name__ == "__main__":
