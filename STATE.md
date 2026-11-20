@@ -1,6 +1,6 @@
 # Current state and future state
 
-As of late October 2026. Every "future" row is **not done**.
+As of November 2026. Every "future" row is **not done**.
 
 ## Current state
 
@@ -11,7 +11,9 @@ As of late October 2026. Every "future" row is **not done**.
 | Network | SSH tunnel connected once; a terminal client got answers through it. Most testing ran on the host itself. |
 | Harness | October runs used a private hand-built harness with no tools attached. Pi not used yet. |
 | Observations | Capacity, reliability and knowledge pilots summarized in [`results/pilot-transcribed/`](results/pilot-transcribed/SUMMARY.md). |
-| This repo | Method bank (26 cases, 8 categories), runner, reference guard, scorers, traceability (15 threats, 19 controls, 13 pen-test methods), docs generated from data. Tests and dry run pass. **Not yet run against the real host or model.** |
+| This repo | Method bank (26 cases, 8 categories), runner, reference guard, scorers, traceability (15 threats, 19 controls, 13 pen-test methods), docs generated from data. Checked on the included synthetic fixtures: tests and dry run pass. **Not yet run against the real host or model.** |
+| Timing run, Oct 21, 2026 (qwen3.6:27b, Ollama 0.32.14, M4 Max 48 GB) | Observed; data in [`results/2026-10-21-timing/`](results/2026-10-21-timing/SUMMARY.md) and Figure 2 published. A separate machine from the pilot above. |
+| Timing runner and summarizer | [`bench/timing/`](bench/timing/). Checked with a fake loopback server and unit tests; no fresh model inference claimed. |
 
 ## Future state, in the order I'd do it
 
@@ -27,6 +29,7 @@ As of late October 2026. Every "future" row is **not done**.
 | 8 | Run the pen-test map ([`pentest/TEST_MAP.md`](pentest/TEST_MAP.md)) and disposition every finding | all | planned |
 | 9 | Fill in the standards mapping honestly, including what isn't covered | — | planned |
 | 10 | Write up what held and what didn't | — | planned |
+| 11 | Long-prompt and context-size timing with the timing runner | — | planned |
 
 The bench is "done enough for advisory use" when the success bar in [`SPEC.md`](SPEC.md) is met. It isn't yet.
 
