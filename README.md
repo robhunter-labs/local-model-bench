@@ -1,32 +1,34 @@
 # Local Model Bench
 
-Measurements and a small bench for running open models locally for security work. Start with the study you came from:
+Two small studies of running an open model locally for security work, and the bench I built from what they taught me. Each study is an observation on one machine, not a benchmark.
 
 | Study | Start here | What the evidence is |
 | --- | --- | --- |
 | [*Where the Time Goes on a Local Model*](https://robhunterworks.com/writing/where-the-time-goes-on-a-local-model/) | [Timing results](results/2026-10-21-timing/SUMMARY.md) · [Figure 2](figures/FIGURE_2_WHERE_THE_SECONDS_WENT.svg) · [Time your own model](bench/timing/) | Observed: 32 calls on Oct 21, 2026, one model, one machine |
 | [*The Model That Says Yes*](https://robhunterworks.com/writing/the-model-that-says-yes/) | [Pilot summary](results/pilot-transcribed/SUMMARY.md) | Observed once, Oct 22 to 24, 2026, on a separate laptop; transcribed from private reports |
-| Clean-room bench (spec, threat model, controls) | [SPEC.md](SPEC.md) · [dry run](#run-it) | Checked on the included synthetic fixtures; not yet run against a live model |
+| Clean-room bench (spec, threat model, controls) | [SPEC.md](SPEC.md) · [dry run](#run-it) | Checked on the included synthetic fixtures; not run against a live model |
 
-Future work is listed in [STATE.md](STATE.md), below the studies.
+## What the studies found
 
-## The Model That Says Yes
+**Where the time goes.** The first call took 12.79 s, and 10.18 s of that was loading the model. Later calls ran at a 4.42 s median, mostly spent generating text at about 21 tokens/s. The first call pays for the load; after that, generation sets the pace. The run did not score the quality of the answers.
 
-I put a refusal-reduced open model on a spare laptop to see whether it could help with legitimate security work. It held more than I expected and reasoned less than I hoped. Then I read [ProjectDiscovery research](https://projectdiscovery.io/research/how-abliterated-models-can-get-you-pwned) in which a cheap, poisoned fine-tune taught a small open model a trigger phrase, and I started treating the model as **an unreviewed pull request with a shell**.
+**The model that says yes.** I put a refusal-reduced open model on a spare laptop to see whether it could help with legitimate security work. It held more than I expected and reasoned less than I hoped. Recall of three planted facts held to about 137k input tokens. What it hit was a latency ceiling (502 s at that size, then a timeout at the next), not a memory crash. It got the same arithmetic wrong twice, and when told to make one tool call at a time it made two at once. Those failures are rebuilt here as bench cases. The pilot summary puts the lesson plainly: a playbook tells the model what to do; a harness enforces what it's allowed to do.
 
-The rest of this repository is what I'd use to finish that work. It's a spec, a build checklist, a secure-configuration baseline, a threat model, a penetration-testing map, and a small runnable bench suite to hold them together. It is a practitioner's working kit, not a standard and not a product.
+## The bench
+
+Then I read [ProjectDiscovery research](https://projectdiscovery.io/research/how-abliterated-models-can-get-you-pwned) in which a cheap, poisoned fine-tune taught a small open model a trigger phrase, and I started treating the model as **an unreviewed pull request with a shell**. So the rest of this repository tests the host and harness around the model, not the model itself. It is a practitioner's working kit, not a standard and not a product.
 
 ![Figure 1: the bench](figures/FIGURE_1_THE_BENCH.svg)
 
-## What's real and what isn't yet
+## What's real and what isn't
 
 Everything here is labeled one of three ways:
 
 | Label | Meaning |
 | --- | --- |
 | **Observed** | Happened on one machine, on the dates given, with synthetic tasks. The pilot is summarized in [`results/pilot-transcribed/`](results/pilot-transcribed/SUMMARY.md) and the timing run in [`results/2026-10-21-timing/`](results/2026-10-21-timing/SUMMARY.md). |
-| **Checked on the included synthetic fixtures** | Code or config exists here and passes its own tests and dry run, but hasn't been run against a live model or host yet. |
-| **Planned** | Written down so it gets done. Not done. |
+| **Checked on the included synthetic fixtures** | Code or config exists here and passes its own tests and dry run, but hasn't been run against a live model or host. |
+| **Planned** | Written down; not done. |
 
 The original runs used a private, hand-built Ruby harness. This repo's Python suite is a clean-room rebuild of the *method*, not a replay of those runs. [`STATE.md`](STATE.md) has the full current-versus-future picture.
 
